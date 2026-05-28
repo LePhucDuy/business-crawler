@@ -31,9 +31,7 @@ class PlaywrightBrowserManager:
             "args": ["--no-sandbox", "--disable-setuid-sandbox"]
         }
         
-        if settings.BRAVE_EXECUTABLE_PATH:
-            logger.info("using_custom_executable", executable_path=settings.BRAVE_EXECUTABLE_PATH)
-            launch_kwargs["executable_path"] = settings.BRAVE_EXECUTABLE_PATH
+        # Use Playwright's built-in Chromium
             
         try:
             self.browser = await self.playwright.chromium.launch(**launch_kwargs)

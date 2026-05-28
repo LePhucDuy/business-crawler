@@ -26,13 +26,9 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # [LAYER SIÊU NẶNG] - Ít bị thay đổi nhất, đưa lên đầu để Docker cache vĩnh viễn
-# Cài đặt Brave Browser và các thư viện C++ cần thiết cho Playwright
+# Cài đặt các thư viện C++ cơ bản cần thiết (nếu có)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl gnupg ca-certificates \
-    && curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg] https://brave-browser-apt-release.s3.brave.com/ stable main" | tee /etc/apt/sources.list.d/brave-browser-release.list \
-    && apt-get update \
-    && apt-get install -y brave-browser \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy wheels đã build sẵn từ stage builder sang và cài đặt siêu tốc

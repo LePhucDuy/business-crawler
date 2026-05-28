@@ -13,8 +13,6 @@ class Settings(BaseSettings):
     HTTP_MAX_RETRIES: int = 3
     DEFAULT_USER_AGENT: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     
-    BRAVE_EXECUTABLE_PATH: str | None = None
-    
     ENABLED_PROVIDERS: List[str] = ["masothue", "gdt"]
     MAX_CONCURRENT_PROVIDERS: int = 3
     
