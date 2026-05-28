@@ -4,6 +4,7 @@ from app.domain.normalized import BusinessProfileNormalized
 from app.crawlers.providers.thuvienphapluat.parser import ThuvienphapluatParser
 from bs4 import BeautifulSoup
 from app.domain.schemas import ProviderResult
+from app.core.exceptions import ProviderTimeoutError, ProviderCaptchaDetected
 import time
 import structlog
 from urllib.parse import urljoin
@@ -85,13 +86,25 @@ class ThuvienphapluatCrawler(BrowserBusinessCrawler):
                 duration_ms=duration_ms
             )
 
-        except Exception as e:
+        except (ProviderTimeoutError, ProviderCaptchaDetected) as e:
             duration_ms = int((time.time() - start_time) * 1000)
-            logger.error("thuvienphapluat_error", error=str(e), exc_info=True)
+            logger.info("thuvienphapluat_blocked_or_timeout", error=str(e))
+            from app.domain.enums import ProviderResultStatus
             return ProviderResult(
                 provider_name=self.provider_name,
                 success=False,
-                status="failed",
+                status=ProviderResultStatus.FAILED,
+                error_message="Not found or blocked by Cloudflare (Timeout/Captcha)",
+                duration_ms=duration_ms
+            )
+        except Exception as e:
+            duration_ms = int((time.time() - start_time) * 1000)
+            logger.error("thuvienphapluat_error", error=str(e), exc_info=True)
+            from app.domain.enums import ProviderResultStatus
+            return ProviderResult(
+                provider_name=self.provider_name,
+                success=False,
+                status=ProviderResultStatus.FAILED,
                 error_message=str(e),
                 duration_ms=duration_ms
             )
