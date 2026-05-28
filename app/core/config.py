@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     ENABLED_PROVIDERS: List[str] = ["masothue", "gdt"]
     MAX_CONCURRENT_PROVIDERS: int = 3
     
+    # Strategy: "parallel" (run all enabled concurrently) or "fallback" (run sequentially, stop on first success)
+    CRAWL_STRATEGY: str = "fallback"
+    
     CACHE_ACTIVE_DAYS: int = 30
     CACHE_INACTIVE_DAYS: int = 7
     CACHE_INCOMPLETE_DAYS: int = 1

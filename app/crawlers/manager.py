@@ -19,27 +19,46 @@ class BusinessCrawlerManager:
         if not crawlers:
             return []
 
-        tasks = []
-        for crawler_class in crawlers:
-            crawler = crawler_class(self.http_client)
-            tasks.append(crawler.lookup_by_tax_code(tax_code))
-            
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        
         final_results = []
-        for i, res in enumerate(results):
-            provider_name = crawlers[i].provider_name
-            if isinstance(res, Exception):
-                logger.error("crawler_manager_exception", provider=provider_name, error=str(res), exc_info=True)
-                final_results.append(ProviderResult(
-                    provider_name=provider_name,
-                    success=False,
-                    status="failed",
-                    error_message=str(res)
-                ))
-            else:
-                final_results.append(res)
+        
+        if settings.CRAWL_STRATEGY == "fallback":
+            for crawler_class in crawlers:
+                crawler = crawler_class(self.http_client)
+                try:
+                    res = await crawler.lookup_by_tax_code(tax_code)
+                    final_results.append(res)
+                    if res.success and res.profile and res.profile.tax_code:
+                        logger.info("fallback_strategy_success", provider=crawler.provider_name)
+                        break
+                except Exception as e:
+                    logger.error("crawler_manager_exception", provider=crawler.provider_name, error=str(e), exc_info=True)
+                    final_results.append(ProviderResult(
+                        provider_name=crawler.provider_name,
+                        success=False,
+                        status="failed",
+                        error_message=str(e)
+                    ))
+        else:
+            tasks = []
+            for crawler_class in crawlers:
+                crawler = crawler_class(self.http_client)
+                tasks.append(crawler.lookup_by_tax_code(tax_code))
                 
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            for i, res in enumerate(results):
+                provider_name = crawlers[i].provider_name
+                if isinstance(res, Exception):
+                    logger.error("crawler_manager_exception", provider=provider_name, error=str(res), exc_info=True)
+                    final_results.append(ProviderResult(
+                        provider_name=provider_name,
+                        success=False,
+                        status="failed",
+                        error_message=str(res)
+                    ))
+                else:
+                    final_results.append(res)
+                    
         return final_results
 
     async def lookup_by_name(self, name: str, provider_names: Optional[List[str]] = None) -> List[List[ProviderResult]]:
@@ -49,25 +68,45 @@ class BusinessCrawlerManager:
         if not crawlers:
             return []
 
-        tasks = []
-        for crawler_class in crawlers:
-            crawler = crawler_class(self.http_client)
-            tasks.append(crawler.lookup_by_name(name))
-            
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        
         final_results = []
-        for i, res in enumerate(results):
-            provider_name = crawlers[i].provider_name
-            if isinstance(res, Exception):
-                logger.error("crawler_manager_exception", provider=provider_name, error=str(res), exc_info=True)
-                final_results.append([ProviderResult(
-                    provider_name=provider_name,
-                    success=False,
-                    status="failed",
-                    error_message=str(res)
-                )])
-            else:
-                final_results.append(res)
+        
+        if settings.CRAWL_STRATEGY == "fallback":
+            for crawler_class in crawlers:
+                crawler = crawler_class(self.http_client)
+                try:
+                    res = await crawler.lookup_by_name(name)
+                    final_results.append(res)
+                    # If this provider returned any results, stop
+                    if res and any(r.success and r.profile for r in res):
+                        logger.info("fallback_strategy_success", provider=crawler.provider_name)
+                        break
+                except Exception as e:
+                    logger.error("crawler_manager_exception", provider=crawler.provider_name, error=str(e), exc_info=True)
+                    final_results.append([ProviderResult(
+                        provider_name=crawler.provider_name,
+                        success=False,
+                        status="failed",
+                        error_message=str(e)
+                    )])
+        else:
+            tasks = []
+            for crawler_class in crawlers:
+                crawler = crawler_class(self.http_client)
+                tasks.append(crawler.lookup_by_name(name))
                 
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            for i, res in enumerate(results):
+                provider_name = crawlers[i].provider_name
+                if isinstance(res, Exception):
+                    logger.error("crawler_manager_exception", provider=provider_name, error=str(res), exc_info=True)
+                    final_results.append([ProviderResult(
+                        provider_name=provider_name,
+                        success=False,
+                        status="failed",
+                        error_message=str(res)
+                    )])
+                else:
+                    final_results.append(res)
+                    
         return final_results
