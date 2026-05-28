@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     STORE_RAW_HTML: bool = False
     RAW_HTML_STORAGE_DIR: str = "./storage/raw_snapshots"
     
-    ALLOWED_DOMAINS: List[str] = ["masothue.com", "gdt.gov.vn", "tracuunnt.gdt.gov.vn", "api.vietqr.io"]
+    ALLOWED_DOMAINS: List[str] = ["masothue.com", "gdt.gov.vn", "tracuunnt.gdt.gov.vn", "api.vietqr.io", "thuvienphapluat.vn"]
     
     @field_validator("ENABLED_PROVIDERS", "ALLOWED_DOMAINS", mode="before")
     @classmethod
