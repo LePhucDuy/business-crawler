@@ -5,6 +5,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from app.core.config import settings
+from app.api.response import APIResponse
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -49,13 +50,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     count=len(q),
                     limit=max_requests,
                 )
+                response = APIResponse.fail(
+                    message=f"Bạn đã vượt quá {max_requests} request/{window}s. Vui lòng thử lại sau {retry_after} giây.",
+                    code=429,
+                    detail={"retry_after_seconds": retry_after},
+                )
                 return JSONResponse(
                     status_code=429,
-                    content={
-                        "error": "Too Many Requests",
-                        "message": f"Bạn đã vượt quá {max_requests} request/{window}s. Vui lòng thử lại sau {retry_after} giây.",
-                        "retry_after_seconds": retry_after,
-                    },
+                    content=response.model_dump(mode="json"),
                     headers={"Retry-After": str(retry_after)},
                 )
 
