@@ -38,7 +38,7 @@ class BusinessMergeResult(BaseModel):
 class BusinessLookupRequest(BaseModel):
     tax_code: Optional[str] = None
     name: Optional[str] = None
-    force_refresh: bool = True
+    force_refresh: bool = False
     providers: Optional[List[str]] = None
     limit: int = 10
 
