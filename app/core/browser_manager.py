@@ -28,7 +28,12 @@ class PlaywrightBrowserManager:
         
         launch_kwargs = {
             "headless": True,
-            "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+            "args": [
+                "--no-sandbox", 
+                "--disable-setuid-sandbox",
+                "--disable-blink-features=AutomationControlled",
+                "--disable-infobars"
+            ]
         }
         
         # Use Playwright's built-in Chromium
