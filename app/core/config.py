@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     CACHE_INCOMPLETE_DAYS: int = 1
     
     ALLOW_MANUAL_CAPTCHA: bool = False
+
+    # Rate Limiting (chống spam API)
+    RATE_LIMIT_REQUESTS: int = 60   # Số request tối đa
+    RATE_LIMIT_WINDOW_SECONDS: int = 60  # Trong khoảng thời gian (giây)
     
     STORE_RAW_HTML: bool = False
     RAW_HTML_STORAGE_DIR: str = "./storage/raw_snapshots"
