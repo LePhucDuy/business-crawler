@@ -7,6 +7,8 @@ class BusinessProfileNormalized(BaseModel):
     business_code: Optional[str] = None
     business_name: Optional[str] = None
     normalized_business_name: Optional[str] = None
+    international_name: Optional[str] = None
+    short_name: Optional[str] = None
     legal_representative: Optional[str] = None
     normalized_legal_representative: Optional[str] = None
     address: Optional[str] = None

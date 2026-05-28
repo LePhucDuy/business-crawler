@@ -72,10 +72,10 @@ Dự án đã được cấu hình sẵn `Dockerfile` siêu tối ưu (chứa s�
 
 ```bash
 # Build và chạy ngầm dự án
-docker-compose up -d --build
+docker compose up -d --build
 
 # Xem log chạy của ứng dụng
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ---
@@ -95,8 +95,8 @@ CRAWL_STRATEGY=fallback
 
 # QUẢN LÝ CACHE THÔNG MINH (INTELLIGENT CACHING):
 # Số ngày tối đa cho phép sử dụng lại dữ liệu trong Database (nếu chưa quá hạn sẽ không cào lại web):
-CACHE_ACTIVE_DAYS=14      # Đối với doanh nghiệp đang hoạt động (ACTIVE) -> Hạn dùng cache 30 ngày
-CACHE_INACTIVE_DAYS=3     # Đối với doanh nghiệp bị khóa/tạm ngừng (INACTIVE/SUSPENDED) -> Hạn dùng 7 ngày
+CACHE_ACTIVE_DAYS=14      # Đối với doanh nghiệp đang hoạt động (ACTIVE) -> Hạn dùng cache 14 ngày
+CACHE_INACTIVE_DAYS=3     # Đối với doanh nghiệp bị khóa/tạm ngừng (INACTIVE/SUSPENDED) -> Hạn dùng 3 ngày
 CACHE_INCOMPLETE_DAYS=1   # Đối với dữ liệu bị cào thiếu (INCOMPLETE) -> Hạn dùng 1 ngày
 ```
 

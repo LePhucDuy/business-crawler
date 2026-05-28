@@ -36,17 +36,35 @@ class MasothueParser(BaseBusinessParser):
         status = find_label_value(soup, ["Tình trạng", "Trạng thái"])
         issued_date_str = find_label_value(soup, ["Ngày cấp", "Ngày hoạt động"])
         
+        # New fields
+        international_name = find_label_value(soup, ["Tên quốc tế"])
+        short_name = find_label_value(soup, ["Tên viết tắt"])
+        tax_authority = find_label_value(soup, ["Quản lý bởi", "Cơ quan thuế"])
+        business_type = find_label_value(soup, ["Loại hình DN", "Loại hình doanh nghiệp"])
+        industry = find_label_value(soup, ["Ngành nghề chính", "Ngành nghề"])
+        phone = find_label_value(soup, ["Điện thoại"])
+        
+        # Clean phone if needed (remove " Ẩn số điện thoại" if present)
+        if phone:
+            phone = phone.replace("Ẩn số điện thoại", "").strip()
+        
         issued_date = NormalizationService.parse_date(issued_date_str) if issued_date_str else None
 
         profile = BusinessProfileNormalized(
             tax_code=NormalizationService.normalize_tax_code(tax_code),
             business_name=business_name,
             normalized_business_name=NormalizationService.normalize_business_name(business_name),
+            international_name=international_name,
+            short_name=short_name,
             address=address,
             normalized_address=NormalizationService.normalize_address(address),
             legal_representative=representative,
             normalized_legal_representative=NormalizationService.normalize_legal_representative(representative),
             status=NormalizationService.normalize_status(status),
+            tax_authority=tax_authority,
+            business_type=business_type,
+            industry=industry,
+            phone=phone,
             issued_date=issued_date,
             source_name=self.provider_name,
             source_url=source_url,

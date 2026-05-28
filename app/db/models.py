@@ -11,6 +11,8 @@ class Business(Base):
     business_code = Column(String(50), nullable=True)
     business_name = Column(String(255), index=True)
     normalized_business_name = Column(String(255), index=True)
+    international_name = Column(String(255))
+    short_name = Column(String(100))
     legal_representative = Column(String(255))
     normalized_legal_representative = Column(String(255))
     address = Column(String(500))
