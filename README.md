@@ -116,7 +116,7 @@ Hệ thống cung cấp RESTful API qua cổng `8000`. Bạn có thể truy cậ
 ```
 *Ghi chú tham số:*
 - `tax_code` *(bắt buộc)*: Mã số thuế cần tra cứu (VD: "0319570124").
-- `force_refresh` *(tùy chọn)*: Nếu bằng `true`, hệ thống sẽ phớt lờ Cache trong DB và ép trình duyệt cào lại data mới nhất từ nguồn web. Mặc định `false`.
+- `force_refresh` *(tùy chọn)*: Mặc định là `true` (Hệ thống luôn tự động cào dữ liệu mới nhất từ nguồn web và bỏ qua Cache để đảm bảo eKYB chính xác nhất). Nếu bạn muốn dùng dữ liệu cũ trong Database cho nhanh, hãy truyền `false`.
 - `providers` *(tùy chọn)*: Chỉ định danh sách crawler sẽ dùng cho request này. Nếu bỏ trống, sẽ dùng mặc định theo `ENABLED_PROVIDERS` trong file `.env`.
 
 **📌 Response (Thành công - HTTP 200):**
