@@ -13,11 +13,17 @@ def find_label_value(soup: BeautifulSoup, label_candidates: List[str]) -> Option
             if parent.name in ('th', 'dt', 'td'):
                 next_sibling = parent.find_next_sibling(['td', 'dd'])
                 if next_sibling:
-                    return " ".join(next_sibling.get_text(strip=True).split())
+                    # Ưu tiên lấy text trong thẻ có itemprop="name" (tránh dính text rác như "Ngoài ra còn đại diện...")
+                    name_span = next_sibling.find(attrs={"itemprop": "name"})
+                    if name_span:
+                        return " ".join(name_span.get_text(separator=" ", strip=True).split())
+                    
+                    # Tránh bị dính liền chữ khi có thẻ <br> (VD: A<br>B -> A B)
+                    return " ".join(next_sibling.get_text(separator=" ", strip=True).split())
             
             if parent.name == 'span':
                 next_sibling = parent.find_next_sibling()
                 if next_sibling:
-                    return " ".join(next_sibling.get_text(strip=True).split())
+                    return " ".join(next_sibling.get_text(separator=" ", strip=True).split())
                     
     return None
