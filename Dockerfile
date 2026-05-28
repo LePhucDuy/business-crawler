@@ -10,8 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Chỉ copy pyproject.toml trước để tận dụng cache layer của Docker
-COPY pyproject.toml /app/
+# Chỉ copy pyproject.toml và README.md trước để tận dụng cache layer của Docker
+COPY pyproject.toml README.md /app/
 
 # Build wheels (gói cài đặt) cho tất cả dependencies để tránh phải build lại từ source ở stage sau
 RUN pip install --no-cache-dir hatchling \
