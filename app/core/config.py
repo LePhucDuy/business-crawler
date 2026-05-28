@@ -21,8 +21,8 @@ class Settings(BaseSettings):
     # Strategy: "parallel" (run all enabled concurrently) or "fallback" (run sequentially, stop on first success)
     CRAWL_STRATEGY: str = "fallback"
     
-    CACHE_ACTIVE_DAYS: int = 30
-    CACHE_INACTIVE_DAYS: int = 7
+    CACHE_ACTIVE_DAYS: int = 14
+    CACHE_INACTIVE_DAYS: int = 3
     CACHE_INCOMPLETE_DAYS: int = 1
     
     ALLOW_MANUAL_CAPTCHA: bool = False
