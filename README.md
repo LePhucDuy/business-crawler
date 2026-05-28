@@ -88,10 +88,16 @@ Trong file `.env`, bạn có thể can thiệp sâu vào cách hệ thống ho�
 # DANH SÁCH NGUỒN (Xếp theo thứ tự ưu tiên)
 ENABLED_PROVIDERS=masothue,gdt
 
-# CHIẾN LƯỢC: 
+# CHIẾN LƯỢC CÀO (CRAWL STRATEGY): 
 # "fallback": Nếu masothue có dữ liệu -> Dừng. Nếu thất bại -> Chạy tiếp gdt. (Tiết kiệm tài nguyên)
 # "parallel": Chạy song song tất cả các nguồn cùng lúc và tự gộp dữ liệu. (Đầy đủ nhưng tốn tài nguyên)
 CRAWL_STRATEGY=fallback
+
+# QUẢN LÝ CACHE THÔNG MINH (INTELLIGENT CACHING):
+# Số ngày tối đa cho phép sử dụng lại dữ liệu trong Database (nếu chưa quá hạn sẽ không cào lại web):
+CACHE_ACTIVE_DAYS=30      # Đối với doanh nghiệp đang hoạt động (ACTIVE) -> Hạn dùng cache 30 ngày
+CACHE_INACTIVE_DAYS=7     # Đối với doanh nghiệp bị khóa/tạm ngừng (INACTIVE/SUSPENDED) -> Hạn dùng 7 ngày
+CACHE_INCOMPLETE_DAYS=1   # Đối với dữ liệu bị cào thiếu (INCOMPLETE) -> Hạn dùng 1 ngày
 ```
 
 ---
