@@ -50,10 +50,14 @@ class BrowserBusinessCrawler(BaseBusinessCrawler):
                 
             # Wait for Cloudflare to solve itself (usually takes 5-15s)
             for _ in range(15):
-                html = await page.content()
-                if "cf-browser-verification" not in html and "Just a moment..." not in html and "DDoS protection" not in html:
-                    # Not on a Cloudflare challenge page anymore!
-                    break
+                try:
+                    html = await page.content()
+                    if "cf-browser-verification" not in html and "Just a moment..." not in html and "DDoS protection" not in html:
+                        # Not on a Cloudflare challenge page anymore!
+                        break
+                except Exception as e:
+                    # Page might be navigating/reloading due to Cloudflare refresh
+                    pass
                 await page.wait_for_timeout(1000)
                 
             # Allow an extra 2 seconds for the actual app to render after CF redirects

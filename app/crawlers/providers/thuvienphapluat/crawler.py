@@ -37,54 +37,105 @@ class ThuvienphapluatCrawler(BrowserBusinessCrawler):
             await self.validate_before_request()
             search_url = await self.build_tax_code_url(tax_code)
             
-            # Fetch search page
-            html = await self.safe_get(search_url)
+            # Manually manage context to share Cloudflare clearance across both requests
+            from app.core.browser_manager import browser_manager
+            from app.core.config import settings
+            from playwright.async_api import TimeoutError as PlaywrightTimeoutError
             
-            # Extract first result
-            soup = BeautifulSoup(html, "html.parser")
+            browser = await browser_manager.get_browser()
+            context = await browser.new_context(
+                user_agent=settings.DEFAULT_USER_AGENT,
+                viewport={"width": 1280, "height": 720}
+            )
+            page = await context.new_page()
             
-            # Usually TVPL search results have specific classes, try a few common ones
-            target_url = None
-            
-            # TVPL might redirect directly if there's only 1 match
-            if "-mst-" in search_url or "/ma-so-thue/" in html:
-                # Need to verify if it redirected
-                pass
-
-            # Find links in search results
-            links = soup.select("a")
-            for link in links:
-                href = link.get("href", "")
-                # Expected format: /ma-so-thue/cong-ty-co-phan-dau-tu-phat-trien-dhf-holdings-mst-0319490253.html
-                if "-mst-" in href and tax_code in href and href.endswith(".html"):
-                    target_url = href
-                    if not target_url.startswith("http"):
-                        target_url = urljoin(self.base_url, target_url)
-                    break
+            try:
+                from playwright_stealth import Stealth
+                await Stealth().apply_stealth_async(page)
+            except Exception as e:
+                logger.warning("playwright_stealth_failed", error=str(e))
+                
+            try:
+                # 1. Fetch Search Page
+                logger.info("thuvienphapluat_search_start", url=search_url)
+                try:
+                    await page.goto(search_url, timeout=settings.HTTP_TIMEOUT_SECONDS * 1000, wait_until="domcontentloaded")
+                except PlaywrightTimeoutError:
+                    pass
                     
-            if not target_url:
-                logger.info("thuvienphapluat_no_search_results", tax_code=tax_code)
-                from app.domain.enums import ProviderResultStatus
-                return ProviderResult(
+                for _ in range(15):
+                    try:
+                        html = await page.content()
+                        if "cf-browser-verification" not in html and "Just a moment..." not in html:
+                            break
+                    except Exception:
+                        pass
+                    await page.wait_for_timeout(1000)
+                    
+                await page.wait_for_timeout(2000)
+                html = await page.content()
+                
+                if self.detect_captcha(html) or "cf-browser-verification" in html or "Just a moment..." in html:
+                    raise ProviderCaptchaDetected(self.provider_name)
+                
+                # Extract first result
+                soup = BeautifulSoup(html, "html.parser")
+                target_url = None
+                
+                links = soup.select("a")
+                for link in links:
+                    href = link.get("href", "")
+                    if "-mst-" in href and tax_code in href and href.endswith(".html"):
+                        target_url = href
+                        if not target_url.startswith("http"):
+                            target_url = urljoin(self.base_url, target_url)
+                        break
+                        
+                if not target_url:
+                    logger.info("thuvienphapluat_no_search_results", tax_code=tax_code)
+                    from app.domain.enums import ProviderResultStatus
+                    return ProviderResult(
+                        provider_name=self.provider_name,
+                        success=False,
+                        status=ProviderResultStatus.FAILED,
+                        error_message="Not found or blocked by Cloudflare",
+                        duration_ms=int((time.time() - start_time) * 1000)
+                    )
+                    
+                # 2. Fetch Detail Page (Reusing the same cleared page!)
+                logger.info("thuvienphapluat_fetching_detail", url=target_url)
+                try:
+                    await page.goto(target_url, timeout=settings.HTTP_TIMEOUT_SECONDS * 1000, wait_until="domcontentloaded")
+                except PlaywrightTimeoutError:
+                    pass
+                    
+                for _ in range(15):
+                    try:
+                        detail_html = await page.content()
+                        if "cf-browser-verification" not in detail_html and "Just a moment..." not in detail_html:
+                            break
+                    except Exception:
+                        pass
+                    await page.wait_for_timeout(1000)
+                    
+                await page.wait_for_timeout(2000)
+                detail_html = await page.content()
+                
+                if self.detect_captcha(detail_html) or "cf-browser-verification" in detail_html or "Just a moment..." in detail_html:
+                    raise ProviderCaptchaDetected(self.provider_name)
+                    
+                profile = await self.parse_business_detail(detail_html, target_url)
+                
+                duration_ms = int((time.time() - start_time) * 1000)
+                return ProviderResult.success_result(
                     provider_name=self.provider_name,
-                    success=False,
-                    status=ProviderResultStatus.FAILED,
-                    error_message="Not found or blocked by Cloudflare",
-                    duration_ms=int((time.time() - start_time) * 1000)
+                    profile=profile,
+                    source_url=target_url,
+                    duration_ms=duration_ms
                 )
                 
-            # Now fetch the detail page
-            logger.info("thuvienphapluat_fetching_detail", url=target_url)
-            detail_html = await self.safe_get(target_url)
-            profile = await self.parse_business_detail(detail_html, target_url)
-            
-            duration_ms = int((time.time() - start_time) * 1000)
-            return ProviderResult.success_result(
-                provider_name=self.provider_name,
-                profile=profile,
-                source_url=target_url,
-                duration_ms=duration_ms
-            )
+            finally:
+                await context.close()
 
         except (ProviderTimeoutError, ProviderCaptchaDetected) as e:
             duration_ms = int((time.time() - start_time) * 1000)
