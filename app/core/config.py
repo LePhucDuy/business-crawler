@@ -32,12 +32,25 @@ class Settings(BaseSettings):
     STORE_RAW_HTML: bool = False
     RAW_HTML_STORAGE_DIR: str = "./storage/raw_snapshots"
     
-    ALLOWED_DOMAINS: List[str] = ["masothue.com", "gdt.gov.vn", "tracuunnt.gdt.gov.vn"]
+    ALLOWED_DOMAINS: List[str] = ["masothue.com", "gdt.gov.vn", "tracuunnt.gdt.gov.vn", "api.vietqr.io"]
     
     @field_validator("ENABLED_PROVIDERS", "ALLOWED_DOMAINS", mode="before")
     @classmethod
     def parse_comma_separated(cls, v: Any) -> List[str]:
+        if isinstance(v, list):
+            return v
         if isinstance(v, str):
+            v = v.strip()
+            # Thử parse JSON array trước (ví dụ: '["masothue","gdt"]')
+            if v.startswith("["):
+                import json
+                try:
+                    result = json.loads(v)
+                    if isinstance(result, list):
+                        return [str(i).strip() for i in result]
+                except json.JSONDecodeError:
+                    pass
+            # Fallback: tách theo dấu phẩy
             return [i.strip() for i in v.split(",") if i.strip()]
         return v
         

@@ -51,7 +51,6 @@ class BusinessLookupService:
         # Check DB Cache
         cached_business = await self.business_repo.get_by_tax_code(normalized_tax_code)
         if cached_business and not request.force_refresh and self._is_cache_valid(cached_business):
-            logger.info("cache_hit", tax_code=normalized_tax_code)
             # Simplification: returning partial mapped data if cached
             profile_data = {k: v for k, v in cached_business.__dict__.items() if not k.startswith('_')}
             profile_data['source_name'] = cached_business.latest_source_name or "db_cache"
