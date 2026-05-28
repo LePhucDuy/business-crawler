@@ -95,4 +95,70 @@ CRAWL_STRATEGY=fallback
 ```
 
 ---
+
+## 🔌 Tài liệu API (API Reference) cho tích hợp eKYB
+
+Hệ thống cung cấp RESTful API qua cổng `8000`. Bạn có thể truy cập `http://localhost:8000/docs` (Swagger UI) để xem trực quan định dạng JSON.
+
+### 1. Tra cứu doanh nghiệp bằng Mã số thuế
+
+**Endpoint:** `POST /api/v1/business/lookup/tax-code`  
+**Content-Type:** `application/json`
+
+**📌 Request Body:**
+```json
+{
+  "tax_code": "0319570124", 
+  "force_refresh": false,   
+  "providers": ["masothue", "gdt"], 
+  "limit": 10
+}
+```
+*Ghi chú tham số:*
+- `tax_code` *(bắt buộc)*: Mã số thuế cần tra cứu (VD: "0319570124").
+- `force_refresh` *(tùy chọn)*: Nếu bằng `true`, hệ thống sẽ phớt lờ Cache trong DB và ép trình duyệt cào lại data mới nhất từ nguồn web. Mặc định `false`.
+- `providers` *(tùy chọn)*: Chỉ định danh sách crawler sẽ dùng cho request này. Nếu bỏ trống, sẽ dùng mặc định theo `ENABLED_PROVIDERS` trong file `.env`.
+
+**📌 Response (Thành công - HTTP 200):**
+```json
+{
+  "success": true,
+  "data": {
+    "tax_code": "0319570124",
+    "business_code": null,
+    "business_name": "CÔNG TY TNHH COCO SEA",
+    "normalized_business_name": "CÔNG TY TNHH COCO SEA",
+    "legal_representative": "NGUYỄN THỊ CẨM TIÊN",
+    "normalized_legal_representative": "NGUYỄN THỊ CẨM TIÊN",
+    "address": "991B Tân Kỳ Tân Quý, Phường Bình Hưng Hòa, Thành phố Hồ Chí Minh, Việt Nam",
+    "status": "ACTIVE",
+    "issued_date": "2023-11-20",
+    "source_name": "masothue",
+    "source_url": "https://masothue.com/0319570124-cong-ty-tnhh-coco-sea",
+    "confidence_score": 100.0
+  },
+  "needs_manual_review": false,
+  "conflicts": [],
+  "provider_results": [
+      // Chi tiết log thu thập từ từng Provider
+  ]
+}
+```
+
+**📌 Response (Lỗi - HTTP 4xx/5xx):**
+```json
+{
+  "detail": "tax_code is required"
+}
+```
+
+### 💡 Gợi ý tích hợp vào hệ thống eKYB nội bộ:
+Khi gọi sang API này, Microservice eKYB của bạn nên xử lý theo logic sau:
+1. Gọi API lấy thông tin: Bắn `tax_code` của khách hàng vào đây.
+2. Kiểm tra `success == true` và `data != null`.
+3. So khớp Tên doanh nghiệp: Lấy `data.business_name` trả về so sánh độ trùng lặp (Fuzzy String Matching) với tên mà đối tác đăng ký. Nếu trùng khớp trên 90% thì duyệt.
+4. Kiểm tra sức khỏe doanh nghiệp: Đảm bảo `data.status == "ACTIVE"` (Đang hoạt động) thay vì `LOCKED` (Khóa/Giải thể).
+5. (Nâng cao): Nếu `needs_manual_review == true`, đánh dấu hồ sơ này cần nhân viên Ops (Con người) vào kiểm duyệt thủ công do hệ thống bị captcha hoặc 2 nguồn trả về data trái ngược nhau (`conflicts`).
+
+---
 *Dự án đang trong quá trình phát triển (WIP).*
