@@ -29,6 +29,12 @@ class BrowserBusinessCrawler(BaseBusinessCrawler):
         page = await context.new_page()
         
         try:
+            from playwright_stealth import Stealth
+            await Stealth().apply_stealth_async(page)
+        except Exception as e:
+            logger.warning("playwright_stealth_failed", error=str(e))
+        
+        try:
             # Navigate to the URL and wait until network is idle (to let JS Cloudflare challenges finish)
             response = await page.goto(
                 url, 
