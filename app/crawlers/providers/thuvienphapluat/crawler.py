@@ -66,9 +66,9 @@ class ThuvienphapluatCrawler(BrowserBusinessCrawler):
                 from app.domain.enums import ProviderResultStatus
                 return ProviderResult(
                     provider_name=self.provider_name,
-                    success=True,
-                    status=ProviderResultStatus.SUCCESS,
-                    profile=BusinessProfileNormalized(source_name=self.provider_name),
+                    success=False,
+                    status=ProviderResultStatus.FAILED,
+                    error_message="Not found or blocked by Cloudflare",
                     duration_ms=int((time.time() - start_time) * 1000)
                 )
                 
