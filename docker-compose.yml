@@ -3,6 +3,7 @@ version: '3.8'
 services:
   db:
     image: postgres:15
+    profiles: ["with-db"] # Chỉ chạy khi gõ thêm --profile with-db
     env_file: .env
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
@@ -15,9 +16,9 @@ services:
       - "8000:8000"
     env_file: .env
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-    depends_on:
-      - db
+      - DATABASE_URL=${DATABASE_URL}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 volumes:
