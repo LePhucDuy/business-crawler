@@ -23,7 +23,7 @@ class ThuvienphapluatCrawler(BrowserBusinessCrawler):
         self.parser = ThuvienphapluatParser()
         
     async def build_tax_code_url(self, tax_code: str) -> str:
-        return f"{self.base_url}/ma-so-thue?q={tax_code}"
+        return f"{self.base_url}/ma-so-thue/tra-cuu-ma-so-thue-doanh-nghiep?timtheo=ma-so-thue&tukhoa={tax_code}"
         
     async def build_name_search_url(self, name: str) -> str:
         raise NotImplementedError("Thuvienphapluat provider only supports tax_code lookup via this interface")
