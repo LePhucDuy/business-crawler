@@ -1,24 +1,56 @@
+# ==========================================
+# STAGE 1: Builder (Tối ưu cài đặt thư viện Python)
+# ==========================================
+FROM python:3.12-slim as builder
+
+WORKDIR /app
+
+# Cài đặt công cụ build cơ bản cho các thư viện C-extensions (ví dụ: asyncpg, lxml)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Chỉ copy pyproject.toml trước để tận dụng cache layer của Docker
+COPY pyproject.toml /app/
+
+# Build wheels (gói cài đặt) cho tất cả dependencies để tránh phải build lại từ source ở stage sau
+RUN pip install --no-cache-dir hatchling \
+    && pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels . \
+    && pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels playwright
+
+# ==========================================
+# STAGE 2: Final (Môi trường chạy thực tế - Gọn và Cache tốt)
+# ==========================================
 FROM python:3.12-slim
 
 WORKDIR /app
 
-# Cài đặt các thư viện hệ thống cần thiết và Brave Browser
+# [LAYER SIÊU NẶNG] - Ít bị thay đổi nhất, đưa lên đầu để Docker cache vĩnh viễn
+# Cài đặt Brave Browser và các thư viện C++ cần thiết cho Playwright
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl gnupg ca-certificates build-essential \
+    curl gnupg ca-certificates \
     && curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg] https://brave-browser-apt-release.s3.brave.com/ stable main" | tee /etc/apt/sources.list.d/brave-browser-release.list \
     && apt-get update \
     && apt-get install -y brave-browser \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml /app/
+# Copy wheels đã build sẵn từ stage builder sang và cài đặt siêu tốc
+COPY --from=builder /app/wheels /wheels
+RUN pip install --no-cache-dir /wheels/* \
+    && rm -rf /wheels
 
-# Cài đặt Python dependencies và Playwright
-RUN pip install --no-cache-dir hatchling playwright \
-    && pip install --no-cache-dir . \
-    && playwright install-deps chromium \
+# Cài đặt trình duyệt headless Chromium của Playwright và dependencies của nó
+# (Layer này cũng ít thay đổi)
+RUN playwright install-deps chromium \
     && playwright install chromium
 
+# [LAYER THAY ĐỔI NHIỀU NHẤT] - Copy mã nguồn dự án vào cuối cùng
+# Bất cứ khi nào bạn sửa code Python, Docker chỉ mất 1 giây để chạy lại từ bước này
 COPY . /app/
 
+# Port mà FastAPI sẽ expose
+EXPOSE 8000
+
+# Chạy server
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
